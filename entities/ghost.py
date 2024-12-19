@@ -178,11 +178,13 @@ class Ghost(Entity, ABC):
         possible_moves = self._get_possible_moves(self._target_cell)
 
         if len(possible_moves) == 0:
-            self._go_back()
-            possible_moves = self._get_possible_moves(self._target_cell)
+            self._next_direction = random.choice([Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT])
+            # self._go_back()
+            # possible_moves = self._get_possible_moves(self._target_cell)
 
         if self.goal_cell is None:
-            self._next_direction, self._next_cell = random.choice(list(possible_moves.items()))
+            if possible_moves.items():
+                self._next_direction, self._next_cell = random.choice(list(possible_moves.items()))
         else:
             self._next_direction, self._next_cell = self._get_closest_move(possible_moves)
 
@@ -265,6 +267,8 @@ class Ghost(Entity, ABC):
             position = self._get_transition_position(time_elapsed, speed)
             self._update_position(position)
         else:
+            if self._target_cell is None:
+                return
             end_position = CellMap.get_cell_position(self._target_cell)
             self._update_position(end_position)
             self._previous_cell = self.cell
@@ -293,6 +297,8 @@ class Ghost(Entity, ABC):
 
     def _get_possible_moves(self, cell):
         moves = {}
+        if cell == None:
+            return moves
         for direction in Direction:
             next_cell = CellMap.get_instance().get_next_cell(cell, direction)
             if self._can_move_to_cell(direction, next_cell):

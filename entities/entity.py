@@ -133,6 +133,8 @@ class Entity(pygame.sprite.Sprite, ABC):
             return cell_size * progress / 100
         else:
             x, y = self.cell
+            if self._target_cell==None:
+                return 0
             target_x, target_y = self._target_cell
 
             if self.direction == Direction.LEFT or self.direction == Direction.RIGHT:

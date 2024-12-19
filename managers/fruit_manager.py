@@ -2,7 +2,6 @@ import pygame
 
 from cell_map import CellMap
 from enums.game_states import GameState
-from utils.audio_utils import AudioUtils
 
 
 class FruitManager:
@@ -13,7 +12,6 @@ class FruitManager:
     def __init__(self, game):
         self.fruits = pygame.sprite.Group()
         self.game = game
-        self._eat_channel = pygame.mixer.Channel(3)
         self._fruit_count = 0
         self._fruit_to_remove = None
 

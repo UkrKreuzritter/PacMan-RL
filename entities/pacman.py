@@ -26,7 +26,7 @@ class Pacman(Entity):
     DEFAULT_DIRECTION = Direction.LEFT
     START_CELL = (13.5, 26)
     ICON_UPDATE_TIME = 100  # milliseconds after icon is updated
-    DEFAULT_LIVES = 3
+    DEFAULT_LIVES = 1
 
     def __init__(self, game):
         super().__init__()
@@ -50,29 +50,20 @@ class Pacman(Entity):
         self._update_position(CellMap.get_cell_position(self.cell))
         self._last_icon_update = time.time()
 
-    def update(self, key_pressed):
-        self._update_direction(key_pressed)
-        self._update_icon()
-        self._move()
-
-    def _update_direction(self, key_pressed):
-        for key in self.KEY_TO_DIRECTION_MAPPING.keys():
-            if key_pressed[key]:
-                new_direction = self.KEY_TO_DIRECTION_MAPPING[key]
-                self.next_direction = new_direction
-                break
-
-        if self.next_direction and self._can_move_at_direction(self.next_direction) and not self._moving:
+    def update(self, dir):
+        self.next_direction = dir
+        if self.next_direction and self.can_move_at_direction(self.next_direction) and not self._moving:
             self.direction = self.next_direction
             self.next_direction = None
+        self._update_icon()
+        self._move()
 
     def _update_icon(self):
         if TimeUtils.elapsed(self._last_icon_update) >= self.ICON_UPDATE_TIME:
             self.image = FileUtils.get_image(self._get_icon_name())
             self._update_counter()
             self._last_icon_update = time.time()
-
-    def _can_move_at_direction(self, direction):
+    def can_move_at_direction(self, direction):
         current_cell = self._target_cell if self._target_cell else self.cell
         next_cell = CellMap.get_instance().get_next_cell(current_cell, direction)
         return self.is_cell_walkable(next_cell)

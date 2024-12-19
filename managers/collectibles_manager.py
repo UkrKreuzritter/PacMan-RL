@@ -2,17 +2,13 @@ import pygame
 
 from cell_map import CellMap
 from enums.game_states import GameState
-from utils.audio_utils import AudioUtils
-
 
 class CollectibleManager:
-    def __init__(self, game):
+    def __init__(self, game=None):
         self.group = pygame.sprite.Group()
         self.game = game
-        self._eat_channel = pygame.mixer.Channel(2)
         self.collected = 0
         x_size, y_size = CellMap.CELLS_PER_PLANE
-
         self.map = [-1]*y_size
         for i in range(y_size):
             self.map[i]=[0 for i in range(x_size)]
@@ -27,13 +23,14 @@ class CollectibleManager:
     def update(self):
         for collectible in self.group:
             collectible.update()
-
+    def get_value_at(self, cell):
+        x, y = cell
+        x, y = int(x), int(y)
+        return self.map[y][x]
     def handle_collision(self, cell):
         collision = False
         for collectible in self.group:
             if collectible.collides(cell):
-                if not self._eat_channel.get_sound():
-                    self._eat_channel.play(AudioUtils.get_sound(AudioUtils.EAT_SOUND), loops=-1)
                 x, y = cell
                 self.map[y][x] = 0
                 collision = True
@@ -43,8 +40,6 @@ class CollectibleManager:
                 collectible.kill()
 
         self.game.pacman.is_eating = collision
-        if not collision:
-            self._eat_channel.stop()
 
     def add_collected(self):
         self.collected += 1

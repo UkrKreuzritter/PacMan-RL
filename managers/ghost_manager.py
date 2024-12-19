@@ -29,7 +29,6 @@ class GhostManager:
         self.previous_mode = None
         self.current_mode_duration = None
         self._mode_start_time = time.time()
-        self._channel = pygame.mixer.Channel(3)
         self._before_pause_elapsed = None
         self._before_frightened_elapsed = None
         self._chase_counter = -1
@@ -50,15 +49,16 @@ class GhostManager:
 
         self.update_mode(self.START_MODE)
 
-    def update(self):
+    def update(self, regime):
         if self._should_update_mode():
             if self.current_mode == GhostMode.FRIGHTENED:
                 next_mode = self.previous_mode
             else:
                 next_mode = GhostMode.SCATTER if self.current_mode == GhostMode.CHASE else GhostMode.CHASE
             self.update_mode(next_mode)
-        for ghost in self.ghosts:
-            ghost.update()
+        for i, ghost in enumerate(self.ghosts):
+            if i < regime:
+                ghost.update()
 
     def update_counter(self):
         if len(self._ghosts_to_activate) > 0:
@@ -121,7 +121,7 @@ class GhostManager:
         if self.current_mode != GhostMode.FRIGHTENED:
             self._scatter_counter += 1
 
-        return self.game.levels.current.scatter_duration[self._scatter_counter]
+        return self.game.levels.current.scatter_duration[min(self._scatter_counter, len(self.game.levels.current.scatter_duration)-1)]
 
     def _set_previous_mode(self, mode):
         if self.current_mode != mode:
@@ -140,9 +140,10 @@ class GhostManager:
         else:
             self.game.update_state(GameState.DEAD_END)
 
-    def render(self, screen):
-        for ghost in self.ghosts:
-            ghost.render(screen)
+    def render(self, screen, REGIME):
+        for i, ghost in enumerate(self.ghosts):
+            if i < REGIME:
+                ghost.render(screen)
 
     def reset(self):
         if self.current_mode == GhostMode.FRIGHTENED:
