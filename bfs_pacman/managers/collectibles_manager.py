@@ -11,11 +11,8 @@ class CollectibleManager:
         self.game = game
         self._eat_channel = pygame.mixer.Channel(2)
         self.collected = 0
-        x_size, y_size = CellMap.CELLS_PER_PLANE
+        self.collected_cells = []
 
-        self.map = [-1]*y_size
-        for i in range(y_size):
-            self.map[i]=[0 for i in range(x_size)]
         self._load()
 
     def render(self, screen):
@@ -32,10 +29,12 @@ class CollectibleManager:
         collision = False
         for collectible in self.group:
             if collectible.collides(cell):
+                self.collected_cells.append(cell)
                 if not self._eat_channel.get_sound():
-                    self._eat_channel.play(AudioUtils.get_sound(AudioUtils.EAT_SOUND), loops=-1)
-                x, y = cell
-                self.map[y][x] = 0
+                    self._eat_channel.play(
+                        AudioUtils.get_sound(AudioUtils.EAT_SOUND), loops=-1
+                    )
+
                 collision = True
                 self.game.add_score(collectible.score)
                 self.add_collected()
@@ -55,12 +54,7 @@ class CollectibleManager:
 
     def _load(self):
         all_collectibles = CellMap.get_instance().collectibles
-        for i, collectible_type in enumerate(all_collectibles):
+        for collectible_type in all_collectibles:
             for cell in all_collectibles[collectible_type]:
                 position = CellMap.get_cell_position(cell)
                 self.add(collectible_type(position, cell))
-                x, y = cell
-                if i==0:
-                    self.map[y][x] = 10
-                else:
-                    self.map[y][x] = 50

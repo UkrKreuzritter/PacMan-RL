@@ -350,7 +350,7 @@ class Ghost(Entity, ABC):
         return self.state in [GhostState.LEAVING_HOME, GhostState.DEAD]
 
     def render(self, screen):
-        # self._render_hint(screen)
+        self._render_hint(screen)
         if self.manager.game.state == GameState.EAT_GHOST_FREEZE and self._dead_text:
             position = CellMap.get_cell_position(self.cell)
             screen.blit(self._dead_text, self._dead_text.get_rect(center=position))

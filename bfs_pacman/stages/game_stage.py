@@ -1,9 +1,8 @@
 import os.path
 import time
 import pygame
-
-from entities.pacai import pacai_class
-
+import json
+import time
 from cell_map import CellMap
 from enums.game_states import GameState
 from enums.ghost_mode import GhostMode
@@ -31,6 +30,8 @@ class GameStage(Stage):
     START_DELAY = 4000
 
     def __init__(self):
+        self._time = time.time()
+        self.results_dct = {"total_score": 0, "total_time": 0, "delta_scores": []}
         super().__init__()
         self.collectibles = None
         self.levels = None
@@ -118,9 +119,15 @@ class GameStage(Stage):
         if self._started:
             self.ghosts.pause()
 
-    def update(self, events, key_pressed, screen, iter):
+    def update(self, events, key_pressed):
         self._handle_escape(events, key_pressed)
         time_elapsed = TimeUtils.elapsed(self._state_start)
+
+        self.results_dct["total_time"] = time.time() - self._time
+        self.results_dct["delta_scores"].append(
+            (self.results_dct["total_time"], self.score)
+        )
+        self.results_dct["total_score"] = self.score
 
         if self.state == GameState.GAME_START and time_elapsed >= self.START_DELAY:
             self.ghosts.reset_timer()
@@ -130,19 +137,11 @@ class GameStage(Stage):
             self.collectibles.update()
             self.fruits.update()
             self.pacman.update(key_pressed)
-            if (iter%4==2):
-                rect = pygame.Rect((0, 60), (560, 620))
-                sub = screen.subsurface(rect)
-                dir = self.pacman.get_next_dir()
-                if(dir is None):
-                    dir = self.pacman.direction
-                pai = pacai_class(dir, sub, self.collectibles.collected)
-                pai.save_results()
-
-            
             self.ghosts.update()
-        elif (self.state == GameState.EAT_GHOST_FREEZE or self.state == GameState.EAT_FRUIT_FREEZE) \
-                and time_elapsed >= self.EAT_FREEZE_TIME:
+        elif (
+            self.state == GameState.EAT_GHOST_FREEZE
+            or self.state == GameState.EAT_FRUIT_FREEZE
+        ) and time_elapsed >= self.EAT_FREEZE_TIME:
             self.update_state(GameState.PLAYING)
             self.ghosts.unpause()
         elif self.state == GameState.DEAD and time_elapsed >= self.PACMAN_DEAD_TIME:
@@ -152,16 +151,28 @@ class GameStage(Stage):
             self.fruits.reset()
             self.update_state(GameState.GAME_START)
         elif self.state == GameState.DEAD_END and time_elapsed >= self.PACMAN_DEAD_TIME:
-            self.notify(StageUpdateType.START_MENU)
+            # self.notify(StageUpdateType.START_MENU)
+            with open(f"result_{time.time()}.json", "w") as f:
+                json.dump(self.results_dct, f)
+            self.__init__()
+            self.start_game()
+            self._next_level()
         elif self.state == GameState.LEVEL_END:
             if self.LEVEL_END_FULL_TIME > time_elapsed >= self.LEVEL_END_MUSIC_TIME:
                 self._animate_background()
             elif time_elapsed >= self.LEVEL_END_FULL_TIME:
                 self.background = FileUtils.get_image(self.BACKGROUND_NAME)
+                with open(f"result_{time.time()}.json", "w") as f:
+                    json.dump(self.results_dct, f)
+                self.__init__()
+                self.start_game()
                 self._next_level()
 
     def _animate_background(self):
-        if TimeUtils.elapsed(self._last_background_update) >= self.BACKGROUND_UPDATE_TIME:
+        if (
+            TimeUtils.elapsed(self._last_background_update)
+            >= self.BACKGROUND_UPDATE_TIME
+        ):
             if self.background == FileUtils.get_image(self.BACKGROUND_NAME):
                 self.background = FileUtils.get_image(self.BACKGROUND_NAME_WHITE)
             else:
@@ -207,7 +218,10 @@ class GameStage(Stage):
         self.game_info.render(screen)
         self.fruits.render(screen)
 
-        if self.state != GameState.EAT_GHOST_FREEZE and self.state != GameState.EAT_FRUIT_FREEZE:
+        if (
+            self.state != GameState.EAT_GHOST_FREEZE
+            and self.state != GameState.EAT_FRUIT_FREEZE
+        ):
             self.pacman.render(screen)
 
         if self.state != GameState.LEVEL_END:
@@ -219,13 +233,17 @@ class GameStage(Stage):
     def save_high_score(self):
         if self.score >= self.high_score:
             self.high_score = self.score
-            with open(os.path.join(FileUtils.PATH_TO_RESOURCES, 'cache.bin'), 'wb') as file:
-                file.write(self.score.to_bytes(24, byteorder='big', signed=False))
+            with open(
+                os.path.join(FileUtils.PATH_TO_RESOURCES, "cache.bin"), "wb"
+            ) as file:
+                file.write(self.score.to_bytes(24, byteorder="big", signed=False))
 
     @classmethod
     def _get_high_score(cls):
         try:
-            with open(os.path.join(FileUtils.PATH_TO_RESOURCES, 'cache.bin'), 'rb') as file:
-                return int.from_bytes(file.read(), byteorder='big')
+            with open(
+                os.path.join(FileUtils.PATH_TO_RESOURCES, "cache.bin"), "rb"
+            ) as file:
+                return int.from_bytes(file.read(), byteorder="big")
         except (ValueError, FileNotFoundError):
             return 0

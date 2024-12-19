@@ -57,6 +57,7 @@ class GhostManager:
             else:
                 next_mode = GhostMode.SCATTER if self.current_mode == GhostMode.CHASE else GhostMode.CHASE
             self.update_mode(next_mode)
+
         for ghost in self.ghosts:
             ghost.update()
 

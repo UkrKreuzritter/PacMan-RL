@@ -13,12 +13,11 @@ class Game:
     GAME_ICON_NAME = "icon"
     GAME_TITLE = "PACMAN"
     DIMENSIONS = (560, 720)
-    
+
     def __init__(self):
         pygame.init()
         AudioUtils.load_sounds()
 
-        self.iter = 0
         self._clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode(self.DIMENSIONS)
         self.start_menu_stage = StartMenuStage()
@@ -63,10 +62,7 @@ class Game:
     def _update(self):
         events = pygame.event.get()
         key_pressed = pygame.key.get_pressed()
-        if isinstance(self.current_stage, GameStage):
-            self.current_stage.update(events, key_pressed, self.screen, self.iter)
-            self.iter += 1
-        elif self.current_stage:
+        if self.current_stage:
             self.current_stage.update(events, key_pressed)
         self._handle_events(events)
 

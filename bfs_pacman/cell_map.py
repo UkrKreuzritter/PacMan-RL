@@ -15,12 +15,9 @@ class CellMap:
         "*": Cell.SPACE,
         "&": Cell.SPACE,
         "+": Cell.TUNNEL,
-        "%": Cell.SPACE_GATE
+        "%": Cell.SPACE_GATE,
     }
-    CHAR_COLLECTIBLE_MAP = {
-        "*": Dot,
-        "&": Energizer
-    }
+    CHAR_COLLECTIBLE_MAP = {"*": Dot, "&": Energizer}
     POSITION_MAPPING = {
         Direction.UP: (0, -1),
         Direction.DOWN: (0, 1),
@@ -29,12 +26,7 @@ class CellMap:
     }
 
     def __init__(self):
-        self.collectibles = {
-            Dot: [],
-            Energizer: []
-        }
-        self.arr_dots = []
-        self.arr_energy = []
+        self.collectibles = {Dot: [], Energizer: []}
         self.count = 0
         self.map = []
 
@@ -60,10 +52,6 @@ class CellMap:
                 if char in self.CHAR_COLLECTIBLE_MAP:
                     collectible_class = self.CHAR_COLLECTIBLE_MAP[char]
                     self.collectibles[collectible_class].append(cell_pos)
-                    if collectible_class == Dot:
-                        self.arr_dots.append(cell_pos)
-                    else:
-                        self.arr_energy.append(cell_pos)
                     self.count += 1
 
                 row.append(self.CHAR_CELL_MAP[char])
@@ -83,7 +71,9 @@ class CellMap:
     def get_next_cell(self, current_cell, direction):
         x, y = current_cell
         current_cell = int(x), int(y)
-        next_cell = tuple(map(sum, zip(current_cell, self.POSITION_MAPPING.get(direction))))
+        next_cell = tuple(
+            map(sum, zip(current_cell, self.POSITION_MAPPING.get(direction)))
+        )
         if self._is_going_through_tunnel(current_cell, next_cell):
             x_cells, y_cells = self.CELLS_PER_PLANE
             x, y = next_cell
@@ -91,7 +81,15 @@ class CellMap:
         return next_cell
 
     def _is_going_through_tunnel(self, current_cell, next_cell):
-        return self.get_cell_type(current_cell) == Cell.TUNNEL and not self.cell_exists(next_cell)
+        return self.get_cell_type(current_cell) == Cell.TUNNEL and not self.cell_exists(
+            next_cell
+        )
+
+    def is_collectible(self, cell):
+        for collectible_type, cells in self.collectibles.items():
+            if cell in cells:
+                return True
+        return False
 
     @classmethod
     def cell_exists(cls, cell):
